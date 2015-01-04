@@ -13,14 +13,24 @@ module Crawler
       @visited = []
     end
 
-    def dump_links
+    def generate_site_map
       crawl(self.site)
     end
 
     def crawl(url, prev_url:nil)
+      site_map = {}
+      site_map[url] = {}
       uri = URI(url)
       self.visited.push(url)
-      links = Crawler::HTML.get_page_links(url)
+      page_object = Crawler::HTML.get_page_object(url)
+      return unless page_object
+
+      links = Crawler::HTML.get_page_links(page_object)
+      images = Crawler::HTML.get_page_images(page_object)
+      js = Crawler::HTML.get_page_js(page_object)
+      site_map[url][:images] = images
+      site_map[url][:js] = js
+      site_map[url][:links] = []
       return unless links
 
       links.each do |link|
@@ -29,23 +39,33 @@ module Crawler
 
         unless self.visited.include?(go_to_url)
           if prev_url.nil?
-            p go_to_url
-            crawl(go_to_url)
+            site_map[url][:links].push(crawl(go_to_url))
           elsif !prev_url.nil? and go_to_url == prev_url
-            p go_to_url
-            crawl(go_to_url, prev_url: url)
+            site_map[url][:links].push(crawl(go_to_url, prev_url: url))
           end
         end
       end
+      site_map
     end
 
-    def self.get_page_links(url)
+    def self.get_page_object(url)
       begin
-        page = Nokogiri::HTML(open(url))
+        Nokogiri::HTML(open(url))
       rescue Exception => e
         return
       end
-      page.css('a').map { |link| link.attribute('href') ? link.attribute('href').value : nil }.compact
+    end
+
+    def self.get_page_links(page_object)
+      page_object.css('a').map { |link| link.attribute('href') ? link.attribute('href').value : nil }.compact
+    end
+
+    def self.get_page_images(page_object)
+      page_object.css('img').map { |link| link.attribute('src') ? link.attribute('src').value : nil }.compact
+    end
+
+    def self.get_page_js(page_object)
+      page_object.css('script').map { |link| link.attribute('src') ? link.attribute('src').value : nil }.compact
     end
 
     def get_fully_qualified_url(link)

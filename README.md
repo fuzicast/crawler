@@ -21,7 +21,7 @@ Or install it yourself as:
 ## Usage
 
 crawler = Crawler::HTML.new('http://www.digitalocean.com')
-crawler.dump_links
+crawler.generate_site_map
 
 ## Contributing
 
