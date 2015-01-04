@@ -20,7 +20,8 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+crawler = Crawler::HTML.new('http://www.digitalocean.com')
+crawler.dump_links
 
 ## Contributing
 
